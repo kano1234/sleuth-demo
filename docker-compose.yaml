@@ -1,0 +1,43 @@
+version: "3.8"
+services:
+  zipkin:
+    image: openzipkin/zipkin
+    container_name: zipkin
+    environment:
+      - STORAGE_TYPE=elasticsearch
+      - ES_HOSTS=elasticsearch:9200
+    ports:
+      - 9411:9411
+    depends_on:
+      - elasticsearch
+
+  dependencies:
+    image: openzipkin/zipkin-dependencies
+    container_name: dependencies
+    entrypoint: crond -f
+    environment:
+      - STORAGE_TYPE=elasticsearch
+      - ES_HOSTS=elasticsearch
+    depends_on:
+      - elasticsearch
+
+  elasticsearch:
+    image: elasticsearch:7.12.1
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - 9200:9200
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+
+  kibana:
+    image: kibana:7.12.1
+    container_name: kibana
+    ports:
+      - 5601:5601
+    depends_on:
+      - elasticsearch
